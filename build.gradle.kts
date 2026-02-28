@@ -108,3 +108,14 @@ tasks.sonar {
 	dependsOn(tasks.jacocoTestReport)
 }
 
+// ---------------------------------------------------------------------------
+// CycloneDX SBOM — generates build/reports/bom.json for Trivy to scan
+// ---------------------------------------------------------------------------
+
+tasks.cyclonedxBom {
+	setIncludeConfigs(listOf("runtimeClasspath"))
+	destination = file("${layout.buildDirectory.get()}/reports")
+	outputName = "bom"
+	outputFormat = "json"
+}
+
