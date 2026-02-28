@@ -39,16 +39,6 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
 
       # -----------------------------------------------------------------------
-      # Cache OWASP NVD database (large ~300 MB download on first run)
-      # -----------------------------------------------------------------------
-      - name: Cache OWASP NVD data
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/dependency-check-data
-          key: ${{ runner.os }}-owasp-${{ hashFiles('build.gradle.kts') }}
-          restore-keys: ${{ runner.os }}-owasp-
-
-      # -----------------------------------------------------------------------
       # 3. Build (compile only — tests run as a separate gate below)
       # -----------------------------------------------------------------------
       - name: Build
@@ -69,11 +59,18 @@ jobs:
         run: ./gradlew jacocoTestCoverageVerification
 
       # -----------------------------------------------------------------------
-      # 6. Gate 3 — OWASP Dependency-Check (Security)
-      #    Build fails if any dependency has CVSS score >= 7.0.
+      # 6. Gate 3 — Trivy Security Scan
+      #    Scans the repository filesystem for vulnerable dependencies.
+      #    Fails if any HIGH or CRITICAL severity CVE is found (CVSS >= 7.0).
       # -----------------------------------------------------------------------
-      - name: OWASP Dependency-Check
-        run: ./gradlew dependencyCheckAnalyze
+      - name: Trivy security scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: 1
+          format: table
 
       # -----------------------------------------------------------------------
       # 7. Gate 4 — SonarCloud Static Analysis
