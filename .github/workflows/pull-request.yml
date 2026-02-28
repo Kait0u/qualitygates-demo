@@ -63,11 +63,14 @@ jobs:
       #    Scans the repository filesystem for vulnerable dependencies.
       #    Fails if any HIGH or CRITICAL severity CVE is found (CVSS >= 7.0).
       # -----------------------------------------------------------------------
+      - name: Generate SBOM
+        run: ./gradlew cyclonedxBom
+
       - name: Trivy security scan
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: fs
-          scan-ref: .
+          scan-type: sbom
+          scan-ref: build/reports/bom.json
           severity: HIGH,CRITICAL
           exit-code: 1
           format: table
