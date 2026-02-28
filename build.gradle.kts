@@ -5,6 +5,7 @@ plugins {
 	jacoco
 	id("org.sonarqube") version "5.0.0.4638"
 	id("com.adarshr.test-logger") version "4.0.0"
+	id("org.cyclonedx.bom") version "1.10.0"
 }
 
 group = "com.example"
