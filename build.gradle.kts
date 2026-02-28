@@ -12,6 +12,10 @@ group = "com.example"
 version = "0.0.1-SNAPSHOT"
 description = "Demo project for Spring Boot"
 
+// Override the Jackson version Spring Boot manages to avoid
+// GHSA-72hv-8253-57qq (DoS via async parser — fixed in 2.21.1)
+extra["jackson-bom.version"] = "2.21.1"
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
