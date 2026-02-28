@@ -79,20 +79,17 @@ jobs:
       # 7. Gate 4 — SonarCloud Static Analysis
       #    Waits for SonarCloud Quality Gate result; fails if gate is not met.
       #
-      #    Required repository secrets:
-      #      SONAR_TOKEN — your SonarCloud user/project token
-      #
-      #    Required repository variables (or set SONAR_PROJECT_KEY / SONAR_ORG
-      #    env vars in the job, or hard-code them in build.gradle.kts):
-      #      SONAR_PROJECT_KEY — e.g. my-org_quality-gates-demo
-      #      SONAR_ORG         — your SonarCloud organisation slug
+      #    Required repository secrets (Settings → Secrets and variables → Actions):
+      #      SONAR_TOKEN       — SonarCloud user token
+      #      SONAR_PROJECT_KEY — e.g. my-org_qualitygates-demo
+      #      SONAR_ORG         — SonarCloud organisation slug
       # -----------------------------------------------------------------------
       - name: SonarCloud analysis
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
-          SONAR_ORG: ${{ vars.SONAR_ORG }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+          SONAR_ORG: ${{ secrets.SONAR_ORG }}
         run: >
           ./gradlew sonar
           -Dsonar.qualitygate.wait=true
