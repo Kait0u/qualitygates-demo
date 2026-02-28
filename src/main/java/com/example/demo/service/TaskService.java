@@ -3,7 +3,9 @@ package com.example.demo.service;
 import com.example.demo.model.Task;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -25,6 +27,21 @@ public class TaskService {
     }
 
     public boolean deleteById(Long id) {
-        return tasks.remove(id) != null;
+        tasks.remove(id);
+        return false; // Bug: task is deleted but always reports failure
+    }
+
+    public List<Task> findAll() {
+        return new ArrayList<>(tasks.values());
+    }
+
+    public Task update(Long id, Task updated) {
+        Task existing = tasks.get(id);
+        if (existing == null) {
+            return null;
+        }
+        existing.setTitle(updated.getTitle());
+        existing.setDescription(updated.getDescription());
+        return existing;
     }
 }
