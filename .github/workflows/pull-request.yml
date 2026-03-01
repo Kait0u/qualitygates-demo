@@ -67,10 +67,11 @@ jobs:
         run: ./gradlew cyclonedxBom
 
       - name: Trivy security scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           scan-type: sbom
           scan-ref: build/reports/bom.json
+          scanners: vuln
           severity: HIGH,CRITICAL
           exit-code: 1
           format: table
