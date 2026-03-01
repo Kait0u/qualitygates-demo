@@ -3,9 +3,9 @@ plugins {
 	id("org.springframework.boot") version "3.5.11"
 	id("io.spring.dependency-management") version "1.1.7"
 	jacoco
-	id("org.sonarqube") version "5.0.0.4638"
-	id("org.owasp.dependencycheck") version "9.2.0"
+	id("org.sonarqube") version "6.0.1.5171"
 	id("com.adarshr.test-logger") version "4.0.0"
+	id("org.cyclonedx.bom") version "1.10.0"
 }
 
 group = "com.example"
@@ -108,11 +108,13 @@ tasks.sonar {
 }
 
 // ---------------------------------------------------------------------------
-// OWASP Dependency-Check — fail on CVSS >= 7.0 (High)
+// CycloneDX SBOM — generates build/reports/bom.json for Trivy to scan
 // ---------------------------------------------------------------------------
 
-dependencyCheck {
-	failBuildOnCVSS = 7.0f
-	formats = listOf("HTML", "XML")
-	analyzers.assemblyEnabled = false
+tasks.cyclonedxBom {
+	setIncludeConfigs(listOf("runtimeClasspath"))
+	destination = file("${layout.buildDirectory.get()}/reports")
+	outputName = "bom"
+	outputFormat = "json"
 }
+
