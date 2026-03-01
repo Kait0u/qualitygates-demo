@@ -39,16 +39,6 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
 
       # -----------------------------------------------------------------------
-      # Cache OWASP NVD database (large ~300 MB download on first run)
-      # -----------------------------------------------------------------------
-      - name: Cache OWASP NVD data
-        uses: actions/cache@v4
-        with:
-          path: ~/.gradle/dependency-check-data
-          key: ${{ runner.os }}-owasp-${{ hashFiles('build.gradle.kts') }}
-          restore-keys: ${{ runner.os }}-owasp-
-
-      # -----------------------------------------------------------------------
       # 3. Build (compile only — tests run as a separate gate below)
       # -----------------------------------------------------------------------
       - name: Build
@@ -69,23 +59,40 @@ jobs:
         run: ./gradlew jacocoTestCoverageVerification
 
       # -----------------------------------------------------------------------
-      # 6. Gate 3 — OWASP Dependency-Check (Security)
-      #    Build fails if any dependency has CVSS score >= 7.0.
+      # 6. Gate 3 — Trivy Security Scan
+      #    Scans the repository filesystem for vulnerable dependencies.
+      #    Fails if any HIGH or CRITICAL severity CVE is found (CVSS >= 7.0).
       # -----------------------------------------------------------------------
-      - name: OWASP Dependency-Check
-        run: ./gradlew dependencyCheckAnalyze
+      - name: Generate SBOM
+        run: ./gradlew cyclonedxBom
+
+      - name: Install Trivy
+        run: |
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key \
+            | gpg --dearmor \
+            | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" \
+            | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -qq
+          sudo apt-get install -y trivy
+
+      - name: Trivy security scan
+        run: |
+          trivy sbom \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --format table \
+            build/reports/bom.json
 
       # -----------------------------------------------------------------------
       # 7. Gate 4 — SonarCloud Static Analysis
       #    Waits for SonarCloud Quality Gate result; fails if gate is not met.
       #
-      #    Required repository secrets:
-      #      SONAR_TOKEN — your SonarCloud user/project token
-      #
-      #    Required repository variables (or set SONAR_PROJECT_KEY / SONAR_ORG
-      #    env vars in the job, or hard-code them in build.gradle.kts):
-      #      SONAR_PROJECT_KEY — e.g. my-org_quality-gates-demo
-      #      SONAR_ORG         — your SonarCloud organisation slug
+      #    Required repository secrets (Settings → Secrets and variables → Actions):
+      #      SONAR_TOKEN       — SonarCloud user token
+      #      SONAR_PROJECT_KEY — e.g. my-org_qualitygates-demo
+      #      SONAR_ORG         — SonarCloud organisation slug
       # -----------------------------------------------------------------------
       - name: SonarCloud analysis
         env:
