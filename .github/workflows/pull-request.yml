@@ -66,26 +66,33 @@ jobs:
       - name: Generate SBOM
         run: ./gradlew cyclonedxBom
 
+      - name: Install Trivy
+        run: |
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key \
+            | gpg --dearmor \
+            | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" \
+            | sudo tee /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update -qq
+          sudo apt-get install -y trivy
+
       - name: Trivy security scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: sbom
-          scan-ref: build/reports/bom.json
-          severity: HIGH,CRITICAL
-          exit-code: 1
-          format: table
+        run: |
+          trivy sbom \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --format table \
+            build/reports/bom.json
 
       # -----------------------------------------------------------------------
       # 7. Gate 4 — SonarCloud Static Analysis
       #    Waits for SonarCloud Quality Gate result; fails if gate is not met.
       #
-      #    Required repository secrets:
-      #      SONAR_TOKEN — your SonarCloud user/project token
-      #
-      #    Required repository variables (or set SONAR_PROJECT_KEY / SONAR_ORG
-      #    env vars in the job, or hard-code them in build.gradle.kts):
-      #      SONAR_PROJECT_KEY — e.g. my-org_quality-gates-demo
-      #      SONAR_ORG         — your SonarCloud organisation slug
+      #    Required repository secrets (Settings → Secrets and variables → Actions):
+      #      SONAR_TOKEN       — SonarCloud user token
+      #      SONAR_PROJECT_KEY — e.g. my-org_qualitygates-demo
+      #      SONAR_ORG         — SonarCloud organisation slug
       # -----------------------------------------------------------------------
       - name: SonarCloud analysis
         env:
