@@ -10,7 +10,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -82,6 +85,48 @@ class TaskControllerTest {
         when(taskService.deleteById(99L)).thenReturn(false);
 
         mockMvc.perform(delete("/tasks/99"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void get_tasks_returns200_withAllTasks() throws Exception {
+        Task t1 = new Task();
+        t1.setId(1L);
+        t1.setTitle("Task A");
+
+        Task t2 = new Task();
+        t2.setId(2L);
+        t2.setTitle("Task B");
+
+        when(taskService.findAll()).thenReturn(List.of(t1, t2));
+
+        mockMvc.perform(get("/tasks"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
+
+    @Test
+    void put_tasks_id_returns200_whenUpdated() throws Exception {
+        Task updated = new Task();
+        updated.setId(1L);
+        updated.setTitle("Updated");
+
+        when(taskService.update(eq(1L), any())).thenReturn(updated);
+
+        mockMvc.perform(put("/tasks/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updated)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Updated"));
+    }
+
+    @Test
+    void put_tasks_id_returns404_whenNotFound() throws Exception {
+        when(taskService.update(eq(99L), any())).thenReturn(null);
+
+        mockMvc.perform(put("/tasks/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new Task())))
                 .andExpect(status().isNotFound());
     }
 }

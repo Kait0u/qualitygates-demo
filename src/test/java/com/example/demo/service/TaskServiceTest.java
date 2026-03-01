@@ -65,6 +65,33 @@ class TaskServiceTest {
         assertThat(taskService.deleteById(999L)).isFalse();
     }
 
+    @Test
+    void findAll_returnsAllCreatedTasks() {
+        taskService.create(taskWithTitle("Task A"));
+        taskService.create(taskWithTitle("Task B"));
+
+        assertThat(taskService.findAll()).hasSize(2);
+    }
+
+    @Test
+    void update_modifiesExistingTask() {
+        Task created = taskService.create(taskWithTitle("Original"));
+
+        Task changes = new Task();
+        changes.setTitle("Updated");
+        changes.setDescription("New description");
+
+        Task result = taskService.update(created.getId(), changes);
+
+        assertThat(result.getTitle()).isEqualTo("Updated");
+        assertThat(result.getDescription()).isEqualTo("New description");
+    }
+
+    @Test
+    void update_returnsNull_whenNotExists() {
+        assertThat(taskService.update(999L, new Task())).isNull();
+    }
+
     // -----------------------------------------------------------------------
 
     private Task taskWithTitle(String title) {
