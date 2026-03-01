@@ -66,15 +66,19 @@ jobs:
       - name: Generate SBOM
         run: ./gradlew cyclonedxBom
 
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin
+
       - name: Trivy security scan
-        uses: aquasecurity/trivy-action@0.29.0
-        with:
-          scan-type: sbom
-          scan-ref: build/reports/bom.json
-          scanners: vuln
-          severity: HIGH,CRITICAL
-          exit-code: 1
-          format: table
+        run: |
+          trivy sbom \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --exit-code 1 \
+            --format table \
+            build/reports/bom.json
 
       # -----------------------------------------------------------------------
       # 7. Gate 4 — SonarCloud Static Analysis
